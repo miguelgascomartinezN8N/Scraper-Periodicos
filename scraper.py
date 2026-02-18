@@ -7,8 +7,19 @@ from article_scraper import ArticleScraper
 from storage import Storage
 
 class NewsScraper:
-    def __init__(self, config_path='/home/ubuntu/news-scraper/config/feeds.json'):
-        self.config_path = config_path
+    def __init__(self, config_path=None):
+        # Use relative path if none provided, ensuring it works in any environment
+        if config_path is None:
+            # Try to get from environment variable or use default relative path
+            config_path = os.environ.get('FEEDS_CONFIG_PATH', 'config/feeds.json')
+        
+        # If the path is relative, make it absolute based on current working directory
+        if not os.path.isabs(config_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            self.config_path = os.path.join(base_dir, config_path)
+        else:
+            self.config_path = config_path
+            
         self.config = self._load_config()
         self.storage = Storage()
         
@@ -23,6 +34,9 @@ class NewsScraper:
         self.max_articles = settings.get('max_articles_per_feed', 10)
 
     def _load_config(self):
+        if not os.path.exists(self.config_path):
+            raise FileNotFoundError(f"Config file not found at: {self.config_path}")
+            
         with open(self.config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 

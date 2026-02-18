@@ -6,8 +6,20 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 class Storage:
-    def __init__(self, db_path='/home/ubuntu/news-scraper/data/news_scraper.db'):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        # Use relative path if none provided, ensuring it works in any environment
+        if db_path is None:
+            # Try to get from environment variable or use default relative path
+            db_path = os.environ.get('DATABASE_PATH', 'data/news_scraper.db')
+        
+        # If the path is relative, make it absolute based on current working directory
+        # but avoid hardcoding /home/ubuntu
+        if not os.path.isabs(db_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            self.db_path = os.path.join(base_dir, db_path)
+        else:
+            self.db_path = db_path
+            
         self._init_db()
 
     def _get_connection(self):
@@ -149,16 +161,17 @@ class Storage:
             conn.commit()
 
     def export_to_json(self, articles, date_str):
-        base_dir = f'/home/ubuntu/news-scraper/output/{date_str}'
-        articles_dir = f'{base_dir}/articles'
+        # Relative path for exports
+        base_dir = os.path.join(os.path.dirname(self.db_path), '..', 'output', date_str)
+        articles_dir = os.path.join(base_dir, 'articles')
         os.makedirs(articles_dir, exist_ok=True)
         
         # Save individual articles
         for article in articles:
             url_hash = hashlib.md5(article['url'].encode()).hexdigest()
-            with open(f'{articles_dir}/{url_hash}.json', 'w', encoding='utf-8') as f:
+            with open(os.path.join(articles_dir, f'{url_hash}.json'), 'w', encoding='utf-8') as f:
                 json.dump(article, f, ensure_ascii=False, indent=2)
         
         # Save consolidated JSON
-        with open(f'{base_dir}/articles_{date_str}.json', 'w', encoding='utf-8') as f:
+        with open(os.path.join(base_dir, f'articles_{date_str}.json'), 'w', encoding='utf-8') as f:
             json.dump(articles, f, ensure_ascii=False, indent=2)

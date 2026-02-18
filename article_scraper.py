@@ -11,6 +11,9 @@ class ArticleScraper:
         self.timeout = timeout
         self.download_images = download_images
         self.headers = {'User-Agent': self.user_agent}
+        
+        # Base directory for the project to ensure relative paths work
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
     def scrape_article(self, url):
         try:
@@ -18,15 +21,15 @@ class ArticleScraper:
             response.raise_for_status()
             html = response.text
             
-            # 1. Title Extraction (Priorities: og:title > twitter:title > <h1> > <title>)
+            # 1. Title Extraction
             title = self._extract_title(html)
             
-            # 2. Main Content Extraction (trafilatura with fallback)
+            # 2. Main Content Extraction
             content = trafilatura.extract(html, include_images=True)
             if not content:
                 content = self._fallback_content_extraction(html)
                 
-            # 3. Main Image Extraction (Priorities: og:image > twitter:image > main image in content)
+            # 3. Main Image Extraction
             image_url = self._extract_main_image(html, url)
             local_image_path = None
             if self.download_images and image_url:
@@ -41,7 +44,6 @@ class ArticleScraper:
                 'success': True if content else False
             }
         except Exception as e:
-            # Fallback if request fails
             return {
                 'url': url,
                 'title': "Error",
@@ -52,22 +54,18 @@ class ArticleScraper:
 
     def _extract_title(self, html):
         soup = BeautifulSoup(html, 'lxml')
-        # og:title
         og_title = soup.find('meta', property='og:title')
         if og_title and og_title.get('content'):
             return og_title.get('content')
             
-        # twitter:title
         tw_title = soup.find('meta', name='twitter:title')
         if tw_title and tw_title.get('content'):
             return tw_title.get('content')
             
-        # <h1>
         h1 = soup.find('h1')
         if h1:
             return h1.get_text().strip()
             
-        # <title>
         title_tag = soup.find('title')
         if title_tag:
             return title_tag.get_text().strip()
@@ -76,13 +74,11 @@ class ArticleScraper:
 
     def _fallback_content_extraction(self, html):
         soup = BeautifulSoup(html, 'lxml')
-        # Look for semantic tags or specific classes
         for selector in ['article', '.article-body', '.entry-content', '.post-content', 'main']:
             element = soup.select_one(selector)
             if element:
                 return element.get_text(separator='\n').strip()
         
-        # Fallback to looking for divs with content-related classes
         content_div = soup.find('div', class_=lambda x: x and ('article' in x or 'content' in x or 'body' in x))
         if content_div:
             return content_div.get_text(separator='\n').strip()
@@ -91,17 +87,14 @@ class ArticleScraper:
 
     def _extract_main_image(self, html, base_url):
         soup = BeautifulSoup(html, 'lxml')
-        # og:image
         og_image = soup.find('meta', property='og:image')
         if og_image and og_image.get('content'):
             return urljoin(base_url, og_image.get('content'))
             
-        # twitter:image
         tw_image = soup.find('meta', name='twitter:image')
         if tw_image and tw_image.get('content'):
             return urljoin(base_url, tw_image.get('content'))
             
-        # Large image inside the article
         article = soup.find('article') or soup.find('main')
         if article:
             img = article.find('img')
@@ -112,22 +105,21 @@ class ArticleScraper:
 
     def _download_image(self, url):
         try:
-            # Ensure output/images exists
-            os.makedirs('/home/ubuntu/news-scraper/output/images', exist_ok=True)
+            # Use path relative to the script's directory
+            images_dir = os.path.join(self.base_dir, 'output', 'images')
+            os.makedirs(images_dir, exist_ok=True)
             
-            # Download image with streaming
             response = requests.get(url, headers=self.headers, timeout=self.timeout, stream=True)
             response.raise_for_status()
             
-            # Filename based on MD5 hash of URL to avoid duplicates and special characters
             url_hash = hashlib.md5(url.encode()).hexdigest()
             parsed_url = urlparse(url)
             ext = os.path.splitext(parsed_url.path)[1]
             if not ext or len(ext) > 5:
-                ext = '.jpg' # Default extension
+                ext = '.jpg'
                 
             filename = f"{url_hash}{ext}"
-            filepath = f"/home/ubuntu/news-scraper/output/images/{filename}"
+            filepath = os.path.join(images_dir, filename)
             
             with open(filepath, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
