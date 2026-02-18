@@ -42,20 +42,26 @@ class FeedReader:
             return datetime.now().isoformat()
 
     def _extract_image(self, entry):
-        # Try to find image in media:content
+        # 1. media:content (Common in many feeds)
         if 'media_content' in entry:
             for content in entry.media_content:
                 if 'url' in content and ('image' in content.get('type', '') or content.get('medium') == 'image'):
                     return content['url']
         
-        # Try enclosures
+        # 2. Enclosures (Standard RSS 2.0)
         if 'enclosures' in entry:
             for enclosure in entry.enclosures:
-                if 'url' in enclosure and 'image' in enclosure.get('type', ''):
+                if 'url' in enclosure and ('image' in enclosure.get('type', '') or 'image' in enclosure.get('url', '')):
                     return enclosure['url']
                     
-        # Try specific feed extensions like media_thumbnail
+        # 3. media:thumbnail
         if 'media_thumbnail' in entry and len(entry.media_thumbnail) > 0:
             return entry.media_thumbnail[0].get('url')
+        
+        # 4. Atom feed specific images
+        if 'links' in entry:
+            for link in entry.links:
+                if 'image' in link.get('type', ''):
+                    return link.get('href')
                     
         return None

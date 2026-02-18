@@ -87,18 +87,33 @@ class ArticleScraper:
 
     def _extract_main_image(self, html, base_url):
         soup = BeautifulSoup(html, 'lxml')
-        og_image = soup.find('meta', property='og:image')
+        
+        # 1. Open Graph Image (Most reliable for social sharing/preview)
+        og_image = soup.find('meta', property='og:image') or soup.find('meta', attrs={"name": "og:image"})
         if og_image and og_image.get('content'):
             return urljoin(base_url, og_image.get('content'))
             
-        tw_image = soup.find('meta', name='twitter:image')
+        # 2. Twitter Card Image
+        tw_image = soup.find('meta', name='twitter:image') or soup.find('meta', property='twitter:image')
         if tw_image and tw_image.get('content'):
             return urljoin(base_url, tw_image.get('content'))
             
-        article = soup.find('article') or soup.find('main')
-        if article:
-            img = article.find('img')
+        # 3. Schema.org Image
+        schema_image = soup.find('meta', itemprop='image')
+        if schema_image and schema_image.get('content'):
+            return urljoin(base_url, schema_image.get('content'))
+
+        # 4. Article specific image (e.g., featured image)
+        # Common selectors for featured images in various CMS
+        featured_selectors = [
+            'img.featured-image', 'img.attachment-post-thumbnail', 
+            '.post-thumbnail img', '.article-header img',
+            '.entry-content img', 'article img'
+        ]
+        for selector in featured_selectors:
+            img = soup.select_one(selector)
             if img and img.get('src'):
+                # Basic check to avoid small icons (optional)
                 return urljoin(base_url, img.get('src'))
                 
         return None
