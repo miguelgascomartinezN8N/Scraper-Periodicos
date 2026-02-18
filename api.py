@@ -121,6 +121,20 @@ async def mark_news_as_used(article_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to mark article as used: {str(e)}")
 
+@app.delete("/clear-database")
+async def clear_database():
+    """
+    Clears all data from the database.
+    
+    This includes articles, processed URLs, and scrape runs.
+    Use with caution as this operation is irreversible.
+    """
+    try:
+        storage.clear_database()
+        return {"message": "Database cleared successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear database: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

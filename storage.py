@@ -160,6 +160,15 @@ class Storage:
             ))
             conn.commit()
 
+    def clear_database(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM articles')
+            cursor.execute('DELETE FROM processed_urls')
+            cursor.execute('DELETE FROM scrape_runs')
+            conn.commit()
+            return True
+
     def export_to_json(self, articles, date_str):
         # Relative path for exports
         base_dir = os.path.join(os.path.dirname(self.db_path), '..', 'output', date_str)
