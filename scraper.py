@@ -74,9 +74,11 @@ class NewsScraper:
                     stats['articles_skipped_duplicate'] += 1
                     continue
                 
-                if self.storage.domain_exists(url):
-                    stats['articles_skipped_domain'] += 1
-                    continue
+                # We are removing the domain_exists check to allow multiple news from the same newspaper
+                # as requested by the user to avoid skipping news in the same run.
+                # if self.storage.domain_exists(url):
+                #     stats['articles_skipped_domain'] += 1
+                #     continue
                 
                 print(f"Scraping article: {url}")
                 article_data = self.article_scraper.scrape_article(url)
