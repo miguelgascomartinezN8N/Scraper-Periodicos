@@ -1,0 +1,26 @@
+{
+  "feeds": [
+    {
+      "name": "El País - Portada",
+      "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
+      "enabled": true
+    },
+    {
+      "name": "El Mundo - Portada",
+      "url": "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml",
+      "enabled": true
+    },
+    {
+      "name": "ABC - Portada",
+      "url": "https://www.abc.es/rss/2.0/portada/",
+      "enabled": true
+    }
+  ],
+  "settings": {
+    "request_delay_seconds": 1,
+    "request_timeout_seconds": 10,
+    "max_articles_per_feed": 10,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "download_images": true
+  }
+}

@@ -1,0 +1,20 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data and Logs (Local)
+data/news_scraper.db
+logs/*.log
+output/
+
+# Environment Variables
+.env
+
+# OS specific files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,4 @@
+# Run scraper twice a day (09:00 and 21:00)
+0 9,21 * * * cd /app && python3 scraper.py >> /app/logs/cron.log 2>&1
+
+# Add a newline to comply with POSIX standards

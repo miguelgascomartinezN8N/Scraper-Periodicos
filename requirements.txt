@@ -1,0 +1,9 @@
+feedparser
+trafilatura
+requests
+beautifulsoup4
+fastapi
+uvicorn
+pydantic
+python-dotenv
+lxml

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  news-scraper:
+    build: .
+    container_name: news-scraper
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+      - ./config:/app/config
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: all
